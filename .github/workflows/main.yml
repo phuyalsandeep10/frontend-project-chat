@@ -43,18 +43,20 @@ jobs:
       - name: Deploy to production server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_HOST }}        # Ensure this secret is set in repo settings
+          username: ${{ secrets.EC2_USERNAME }} # Ensure this secret is set in repo settings
+          key: ${{ secrets.SSH_PRIVATE_KEY }}   # Ensure this secret is set in repo settings
+          port: ${{ secrets.EC2_PORT }}         # Ensure this secret is set in repo settings
           script: |
-            cd /var/www/chatboq_portal/chatboq-web
+            cd /home/ubuntu/chatboq-web
             git pull origin main
-            pm2 stop chatboq-web
+            pm2 stop chatboq-web || true
             npm install
             npm run build
-            PORT=3002 pm2 start npm --name chatboq-web -- run start
+            pm2 start npm --name "chatboq-web" -- start
             pm2 list
             echo "✅ Deployment completed successfully!"
 
       - name: Verify production site
-        run: curl -f https://portal.chatboq.com || exit 1
+        run: |
+          curl -f https://portal.chatboq.com || exit 1
